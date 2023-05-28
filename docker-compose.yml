@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  tree-of-life-app:
+    container_name: tree-of-life-app
+    build: $PWD/docker/image
+    command:
+      - /var/www/docker/docker-entrypoint
+    environment:
+      # Параметры приложения
+      - APP_ENV=dev
+      - APP_DATABASE_DSN=mysql:dbname=tree_of_life;host=tree-of-life-db
+      - APP_DATABASE_USER=tree-of-life-app
+      - APP_DATABASE_PASSWORD=A0h3dIzdy8
+      # Параметры скрипта docker-entrypoint
+      - USER_ID=${USER_ID:-1000}
+      - USER_NAME=$USER
+      # Параметры расширения XDebug
+      - XDEBUG_MODE=debug
+      - XDEBUG_CONFIG="idekey=123"
+      - PHP_IDE_CONFIG=serverName=localhost
+    working_dir: /var/www
+    volumes:
+      - $PWD/:/var/www
+    depends_on:
+      - tree-of-life-db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  tree-of-life-nginx:
+    image: nginx:1.17
+    container_name: tree-of-life-nginx
+    working_dir: /var/www
+    volumes:
+      - $PWD/:/var/www
+      - $PWD/docker/config/nginx.conf.d/:/etc/nginx/conf.d/:ro
+    depends_on:
+      - tree-of-life-app
+    ports:
+      - "127.0.0.1:80:80"
+
+  tree-of-life-db:
+    image: mysql:8.0.32
+    container_name: tree-of-life-db
+    hostname: tree-of-life-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=GFA2mc3QSe
+      - MYSQL_USER=tree-of-life-app
+      - MYSQL_PASSWORD=A0h3dIzdy8
+      - MYSQL_DATABASE=tree_of_life
+    volumes:
+      - $PWD/docker/config/mysql.conf.d:/etc/mysql/conf.d/:ro
+      - tree_of_life_db_data:/var/lib/mysql
+    ports:
+      - "127.0.0.1:3306:3306"
+
+volumes:
+  tree_of_life_db_data:
