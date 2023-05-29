@@ -7,7 +7,7 @@ class TreeData
     private int $nodeId;
     private string $path;
 
-    public function __constructor(int $nodeId, string $path): void
+    public function __construct(int $nodeId, string $path)
     {
        $this->nodeId = $nodeId;
        $this->path = $path;

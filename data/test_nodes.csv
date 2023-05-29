@@ -1,0 +1,11 @@
+node_id,node_name,child_nodes,leaf_node,tolorg_link,extinct,confidence,phylesis
+1,Animal,2,0,1,0,0,0
+2,Mammal,2,0,1,0,0,0
+3,Reptile,0,0,1,0,0,0
+4,Bird,0,0,0,0,0,0
+5,Rodent,0,0,0,0,0,0
+6,A,0,0,0,0,0,0
+7,B,0,0,0,0,0,0
+8,C,0,0,0,0,0,0
+9,D,0,0,0,0,0,0
+10,E,0,0,0,0,0,0
