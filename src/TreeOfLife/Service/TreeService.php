@@ -102,7 +102,7 @@ class TreeService implements TreeOfLifeServiceInterface
         $row = $this->connection->execute($query)->fetch(\PDO::FETCH_ASSOC);
         $parentId = $this->getParentId($row);
 
-        return $this->getNode($parentId);
+        return $parentId ? $this->getNode($parentId) : null;
     }
 
     /**
