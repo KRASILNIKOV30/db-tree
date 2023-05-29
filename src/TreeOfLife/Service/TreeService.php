@@ -96,11 +96,30 @@ class TreeService implements TreeOfLifeServiceInterface
     }
 
     /**
-     * @inheritDoc
+     * Возвращает список дочерних узлов к узлу, т.е ближайших потомков
+     *
+     * @param int $id
+     * @return TreeOfLifeNodeData[]
      */
     public function getChildren(int $id): array
     {
-        // TODO: Implement getChildren() method.
+        $path = $this->getPath($id) . '%';
+        $query = <<<SQL
+        SELECT
+          t.path,
+          tn.id,
+          tn.name,
+          tn.extinct,
+          tn.confidence
+        FROM tree_of_life t
+          INNER JOIN tree_of_life_node tn on t.node_id = tn.id
+        WHERE t.path LIKE ?
+          AND STRFIND(t.path, '/') = (STRFIND(?, '/') + 1) 
+        ORDER BY tn.id
+        SQL;
+        $rows = $this->connection->execute($query, [$path, $path])->fetchAll(\PDO::FETCH_ASSOC);
+
+        return array_map(fn($row) => self::hydrateTreeNodeData($row), $rows);
     }
 
     /**
@@ -145,7 +164,17 @@ class TreeService implements TreeOfLifeServiceInterface
      */
     public function deleteSubTree(int $id): void
     {
-        // TODO: Implement deleteSubTree() method.
+        $path = $this->getPath($id) . '%';
+        $query = <<<SQL
+        DELETE FROM tree_of_life_node 
+        WHERE id IN (
+            SELECT t.node_id
+            FROM tree_of_life t
+            WHERE t.path LIKE ?
+        )
+        SQL;
+
+        $this->connection->execute($query, [$path]);
     }
 
     private function getPath(int $id): string
