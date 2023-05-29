@@ -21,7 +21,6 @@ abstract class AbstractDatabaseTestCase extends TestCase
 
     protected function tearDown(): void
     {
-        // Always rollback transaction - no changes applied to test database data.
         $this->connection->rollback();
         parent::tearDown();
     }

@@ -61,7 +61,22 @@ class TreeService implements TreeOfLifeServiceInterface
      */
     public function getSubTree(int $id): TreeOfLifeNode
     {
-        // TODO: Implement getSubTree() method.
+        $path = $this->getPath($id) . '%';
+        $query = <<<SQL
+        SELECT
+          t.path,
+          tn.id,
+          tn.name,
+          tn.extinct,
+          tn.confidence
+        FROM tree_of_life t
+          INNER JOIN tree_of_life_node tn on t.node_id = tn.id
+        WHERE t.path LIKE ?
+        ORDER BY tn.id
+        SQL;
+        $rows = $this->connection->execute($query, [$path])->fetchAll(\PDO::FETCH_ASSOC);
+
+        return $this->hydrateTree($rows, $id);
     }
 
     /**
@@ -96,7 +111,6 @@ class TreeService implements TreeOfLifeServiceInterface
         $allNodes = $root->listNodes();
         $allTreeData = self::buildTreeData($root);
 
-        // Вместо записи всех узлов за один запрос делим массив на части.
         /** @var TreeOfLifeNode[] $nodes */
         foreach (array_chunk($allNodes, self::INSERT_BATCH_SIZE) as $nodes)
         {
@@ -134,6 +148,18 @@ class TreeService implements TreeOfLifeServiceInterface
         // TODO: Implement deleteSubTree() method.
     }
 
+    private function getPath(int $id): string
+    {
+        $query = <<<SQL
+        SELECT t.path
+        FROM tree_of_life t
+        WHERE t.node_id = $id
+        SQL;
+        $row = $this->connection->execute($query)->fetch(\PDO::FETCH_ASSOC);
+
+        return $row['path'];
+    }
+
 
     /**
      * @param TreeOfLifeNode $root
@@ -162,8 +188,6 @@ class TreeService implements TreeOfLifeServiceInterface
     }
 
     /**
-     * Преобразует один результат SQL-запроса в объект, представляющий узел дерева без связей с другими узлами.
-     *
      * @param array<string,string|null> $row
      * @return TreeOfLifeNodeData
      */
@@ -259,7 +283,7 @@ class TreeService implements TreeOfLifeServiceInterface
      * @param array<array<string,string|null>> $rows
      * @return TreeOfLifeNode
      */
-    private function hydrateTree(array $rows): TreeOfLifeNode
+    private function hydrateTree(array $rows, int $rootId = null): TreeOfLifeNode
     {
         $nodesMap = self::hydrateNodesMap($rows);
 
@@ -267,7 +291,7 @@ class TreeService implements TreeOfLifeServiceInterface
         foreach ($rows as $row)
         {
             $id = (int)$row['id'];
-            if ($parentId = $this->getParentId($row))
+            if ($id !== $rootId && $parentId = $this->getParentId($row))
             {
                 $node = $nodesMap[$id];
                 $parent = $nodesMap[$parentId];
@@ -293,12 +317,11 @@ class TreeService implements TreeOfLifeServiceInterface
         if ($pathLen < 2) {
             return null;
         }
+
         return (int)$path[$pathLen - 2];
     }
 
     /**
-     * Преобразует набор результатов SQL-запроса в словарь, где ключи - ID узлов, а значения - объекты.
-     *
      * @param array<array<string,string|null>> $rows
      * @return TreeOfLifeNode[] - отображает ID узла на узел.
      */
@@ -314,8 +337,6 @@ class TreeService implements TreeOfLifeServiceInterface
     }
 
     /**
-     * Преобразует один результат SQL-запроса в объект, представляющий узел дерева.
-     *
      * @param array<string,string|null> $row
      * @return TreeOfLifeNode
      */
