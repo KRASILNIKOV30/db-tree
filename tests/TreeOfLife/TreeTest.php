@@ -125,6 +125,24 @@ class TreeTest extends AbstractDatabaseTestCase
         $this->assertTreeNode(new TreeOfLifeNodeData(2539, 'Pycnogonida', false, 0), $children[2]);
     }
 
+    public function testGetAncestors(): void
+    {
+        // Arrange
+        $root = $this->loadTreeOfLifeFromCsv();
+        $this->service->saveTree($root);
+
+        // Act
+        $parentNode = $this->service->getParentNode(2539);
+        // Assert
+        $this->assertTreeNode(new TreeOfLifeNodeData(2535, 'Chelicerata', false, 0), $parentNode);
+
+        // Act
+        $parentNode = $this->service->getParentNode(2535);
+
+        // Assert
+        $this->assertTreeNode(new TreeOfLifeNodeData(2469, 'Arthropoda', false, 0), $parentNode);
+    }
+
     private function assertTreeNode(TreeOfLifeNodeDataInterface $expected, TreeOfLifeNodeDataInterface $node): void
     {
         $this->assertEquals($expected->getId(), $node->getId());

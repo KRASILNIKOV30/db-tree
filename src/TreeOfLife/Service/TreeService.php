@@ -92,7 +92,17 @@ class TreeService implements TreeOfLifeServiceInterface
      */
     public function getParentNode(int $id): ?TreeOfLifeNodeData
     {
-        // TODO: Implement getParentNode() method.
+        $query = <<<SQL
+        SELECT
+          t.path
+        FROM tree_of_life t
+        WHERE t.node_id = $id
+        SQL;
+
+        $row = $this->connection->execute($query)->fetch(\PDO::FETCH_ASSOC);
+        $parentId = $this->getParentId($row);
+
+        return $this->getNode($parentId);
     }
 
     /**
@@ -352,7 +362,7 @@ class TreeService implements TreeOfLifeServiceInterface
 
     /**
      * @param array<array<string,string|null>> $rows
-     * @return TreeOfLifeNode[] - отображает ID узла на узел.
+     * @return TreeOfLifeNode[]
      */
     private static function hydrateNodesMap(array $rows): array
     {
